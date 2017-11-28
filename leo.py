@@ -110,6 +110,7 @@ void setup() {
 
     def do_STRING(self, line, n="\n\t"):
         """type the given string"""
+        line = line.replace('"', '\\"')
         print("[+] Adding STRING '{}'".format(line))
         self.f.write("""{}Keyboard.print("{}");""".format(n, line))
 
