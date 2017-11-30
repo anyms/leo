@@ -166,16 +166,17 @@ void setup() {
         self.f.write("""{}typeKey(KEY_UP_ARROW);""".format(n))
 
 
-    def do_PRESS(self, line):
+    def do_PRESS(self, line, n="\n\t"):
         print("[+] Adding PRESS '{}'".format(line))
+
         keys = line.split(" ")
         for key in keys:
-            if line.isupper():
-                self.f.write("""\n\tKeyboard.press(KEY_{});""".format(key))
+            if key.isupper():
+                self.f.write("""{}Keyboard.press(KEY_{});""".format(n, key))
             else:
-                self.f.write("""\n\tKeyboard.press('{}');""".format(line))
+                self.f.write("""{}Keyboard.press('{}');""".format(n, key))
 
-        self.f.write("""\n\tKeyboard.releaseAll();""")
+        self.f.write("""{}Keyboard.releaseAll();""".format(n))
 
 
     def do_REPEAT(self, line):
