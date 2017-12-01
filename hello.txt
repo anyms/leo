@@ -1,9 +1,7 @@
 BEGIN
-DELAY 1000
-GUI r
-DELAY 200
-STRING notepad
-ENTER
-DELAY 300
-STRING hello, world
+VAR timer 1000
+DEFAULT_DELAY 1000
+STRING hello{{timer}}
+DELAY {{timer}}
+REPEAT 10: STRING this is from arduino {{_i}} {{timer}}; ENTER
 END

@@ -2,6 +2,7 @@ import cmd
 import optparse
 import sys
 import os
+import re
 
 if sys.argv[1] == "keylist":
         keys   = """
@@ -51,6 +52,8 @@ class Leo(cmd.Cmd):
     use_rawinput = False
     prompt = ''
 
+    variables = {}
+    default_delay = 100
     parser = optparse.OptionParser("usage%prog "+
             "<input_file> -o <output_file>")
     parser.add_option('-o', dest='out', type='string',
@@ -78,121 +81,201 @@ Author:     Jeeva
 URL:        https://github.com/anyms/leo
 ********************/
 
-void typeKey(int key) {
-    Keyboard.press(key);
-    delay(50);
-    Keyboard.release(key);
-}
-void combo(int key, char letter) {
-    Keyboard.press(key);
-    Keyboard.press(letter);
-    Keyboard.releaseAll();
-}
-
-void setup() {
-    Keyboard.begin();""")
+void typeKey(int key) {Keyboard.press(key);delay(50);Keyboard.release(key);}void combo(int key, char letter) {Keyboard.press(key);Keyboard.press(letter);Keyboard.releaseAll();}void setup() {Keyboard.begin();""")
 
     def do_REM(self, line):
         """just a comment"""
 
 
-    def do_DELAY(self, line, n="\n\t"):
+    def do_DELAY(self, line):
         """sleep for spefied time (ms)"""
+        line = self.replace_vars(line)
         print("[+] Adding delay '{}ms'".format(line))
-        self.f.write("""{}delay({});""".format(n, line))
+        self.f.write("""delay({});""".format(line))
 
 
-    def do_GUI(self, line, n="\n\t"):
+    def do_GUI(self, line):
         """press left GUI key in Windows its windows key"""
+        line = self.replace_vars(line)
         print("[+] Adding GUI + {}".format(line))
-        self.f.write("""{}combo(KEY_LEFT_GUI, '{}');""".format(n, line))
+        self.f.write("""combo(KEY_LEFT_GUI, '{}');""".format(line))
 
 
-    def do_STRING(self, line, n="\n\t"):
+    def replace_vars(self, string):
+        try:
+            m = re.search(r'{{(.*?)}}', string)
+        except TypeError:
+            return string
+
+        count = 0
+        while True:
+            try:
+                key = str(m.group(count)).replace("{", "").replace("}", "")
+            except IndexError: break
+            except AttributeError: break
+            try:
+                string = re.sub(r'{{(.*?)}}', self.variables[key], string, 1)
+            except KeyError: break
+            count += 1
+        return string
+
+
+    def emptyline(self):
+        pass
+
+
+    def do_STRING(self, line):
         """type the given string"""
         line = line.replace('"', '\\"')
         print("[+] Adding STRING '{}'".format(line))
-        self.f.write("""{}Keyboard.print("{}");""".format(n, line))
+
+        if line.find("{{_i}}") > -1:
+            line = line.replace('{{_i}}', '%d')
+            line = self.replace_vars(line)
+            self.f.write("""char buf[30];sprintf(buf, "{}", _i);""".format(line))
+            self.f.write("""Keyboard.print(buf);""")
+        elif line.find("{{") > -1:
+            line = self.replace_vars(line)
+            line = line.replace("{{", "").replace("}}", "")
+            self.f.write("""Keyboard.print({});""".format(line))
+        else:
+            line = self.replace_vars(line)
+            self.f.write("""Keyboard.print("{}");""".format(line))
 
 
-    def do_ENTER(self, line, n="\n\t"):
+    def do_ENTER(self, line):
         print("[+] Adding ENTER key")
-        self.f.write("""{}typeKey(KEY_RETURN);""".format(n))
+        self.f.write("""typeKey(KEY_RETURN);""")
 
 
-    def do_SHIFT(self, line, n="\n\t"):
+    def do_SHIFT(self, line):
+        line = self.replace_vars(line)
         print("[+] Adding SHIFT + {}".format(line))
         if line.isupper():
             line = "KEY_{}".format(line)
-            self.f.write("""{}combo(KEY_RIGHT_SHIFT, {});""".format(n, line))
+            self.f.write("""combo(KEY_RIGHT_SHIFT, {});""".format(line))
         else:
-            self.f.write("""{}combo(KEY_RIGHT_SHIFT, '{}');""".format(n, line))
+            self.f.write("""combo(KEY_RIGHT_SHIFT, '{}');""".format(line))
 
 
-    def do_ALT(self, line, n="\n\t"):
+    def do_ALT(self, line):
+        line = self.replace_vars(line)
         print("[+] Adding ALT + {}".format(line))
         if line.isupper():
             line = "KEY_{}".format(line)
-            self.f.write("""{}combo(KEY_RIGHT_ALT, {});""".format(n, line))
+            self.f.write("""combo(KEY_RIGHT_ALT, {});""".format(line))
         else:
-            self.f.write("""{}combo(KEY_RIGHT_ALT, '{}');""".format(n, line))
+            self.f.write("""combo(KEY_RIGHT_ALT, '{}');""".format(line))
 
 
-    def do_CTRL(self, line, n="\n\t"):
+    def do_CTRL(self, line):
+        line = self.replace_vars(line)
         print("[+] Adding CTRL + {}".format(line))
         if line.isupper():
             line = "KEY_{}".format(line)
-            self.f.write("""{}combo(KEY_RIGHT_CTRL, {});""".format(n, line))
+            self.f.write("""combo(KEY_RIGHT_CTRL, {});""".format(line))
         else:
-            self.f.write("""{}combo(KEY_RIGHT_CTRL, '{}');""".format(n, line))
+            self.f.write("""combo(KEY_RIGHT_CTRL, '{}');""".format(line))
 
-    def do_DOWN(self, line, n="\n\t"):
+    def do_DOWN(self, line):
         print("[+] Adding DOWN")
-        self.f.write("""{}typeKey(KEY_DOWN_ARROW);""".format(n))
+        self.f.write("""typeKey(KEY_DOWN_ARROW);""")
 
 
-    def do_LEFT(self, line, n="\n\t"):
+    def do_LEFT(self, line):
         print("[+] Adding LEFT")
-        self.f.write("""{}typeKey(KEY_LEFT_ARROW);""".format(n))
+        self.f.write("""typeKey(KEY_LEFT_ARROW);""")
 
 
-    def do_RIGHT(self, line, n="\n\t"):
+    def do_RIGHT(self, line):
         print("[+] Adding RIGHT")
-        self.f.write("""{}typeKey(KEY_RIGHT_ARROW);""".format(n))
+        self.f.write("""typeKey(KEY_RIGHT_ARROW);""")
 
 
-    def do_UP(self, line, n="\n\t"):
+    def do_UP(self, line):
         print("[+] Adding UP")
-        self.f.write("""{}typeKey(KEY_UP_ARROW);""".format(n))
+        self.f.write("""typeKey(KEY_UP_ARROW);""")
 
 
-    def do_PRESS(self, line, n="\n\t"):
+    def do_PRESS(self, line):
+        line = self.replace_vars(line)
         print("[+] Adding PRESS '{}'".format(line))
 
         keys = line.split(" ")
         for key in keys:
             if key.isupper():
-                self.f.write("""{}Keyboard.press(KEY_{});""".format(n, key))
+                self.f.write("""Keyboard.press(KEY_{});""".format(key))
             else:
-                self.f.write("""{}Keyboard.press('{}');""".format(n, key))
+                self.f.write("""Keyboard.press('{}');""".format(key))
 
-        self.f.write("""{}Keyboard.releaseAll();""".format(n))
+        self.f.write("""Keyboard.releaseAll();""")
 
 
-    def do_REPEAT(self, line):
+    def do_DEFAULT_DELAY(self, line):
+        line = self.replace_vars(line)
+        self.default_delay = int(line)
+
+
+    def loop_magic_var(self, line):
+        if line.startswith("{{") and line.endswith("}}"):
+            line = line.replace("{{_i}}", 'buf')
+        elif line.startswith("{{"):
+            line = line.replace("{{_i}}", 'buf + "')
+            line = line + '"'
+        elif line.endswith("}}"):
+            line = line.replace("{{_i}}", '" + buf')
+            line = '"' + line
+        else:
+            line = line.replace("{{_i}}", '" + buf + "')
+            line = '"' + line + '"'
+
+        return line
+
+
+    def do_REPEAT(self, line, op="++"):
+        line = self.replace_vars(line)
+
         data = line.split(":")
         iteration = data[0]
-        command = data[1].strip().split(" ")
-        method = command[0]
-        command.pop(0)
-        line = ""
-        for cmd in command:
-            line += "{} ".format(cmd)
-        line = line.strip()
-        self.f.write("""\n\tfor (int i = 0; i < {}; i++) {{""".format(iteration))
-        getattr(self, "do_" + method)(line, n="\n\t\t")
-        self.f.write("\n\t}")
+
+        if op == "++":
+            query = """for (int _i = 0; _i < {}; _i{}) {{""".format(iteration, op)
+        else:
+            query = """for (int _i = {}; _i >= 0; _i{}) {{""".format(int(iteration) - 1, op)
+        self.f.write(query)
+
+        main_commands = data[1].strip().split(";")
+        for mc in main_commands:
+            print("==> " + mc)
+            command = mc.strip().split(" ")
+            method = command[0]
+            command.pop(0)
+            line = ""
+            for cmd in command:
+                line += "{} ".format(cmd)
+            line = line.strip()
+
+            getattr(self, "do_" + method)(line)
+    
+        self.do_DELAY(self.default_delay)            
         print("[+] REPEAT added for {} times".format(iteration))
+        self.f.write("}")
+
+
+    def do_REVERSE_REPEAT(self, line, op="--"):
+        self.do_REPEAT(line, op)
+
+
+    def do_VAR(self, line):
+        data = line.split(" ")
+        name = data[0]
+        content = ""
+        data.pop(0)
+        for d in data:
+            content += (d + " ")
+        content = content.strip()    
+
+        self.variables[name] = content
 
 
     def do_EOF(self, line):
@@ -210,11 +293,7 @@ void setup() {
 
     def do_END(self, line):
         print("[+] Finishing...")
-        self.f.write("""
-    Keyboard.end();
-}
-void loop() {}
-""")
+        self.f.write("""Keyboard.end();}void loop() {}""")
         self.f.close()
 
 
