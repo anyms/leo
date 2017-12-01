@@ -1,7 +1,10 @@
 BEGIN
-VAR timer 1000
-DEFAULT_DELAY 1000
-STRING hello{{timer}}
-DELAY {{timer}}
-REPEAT 10: STRING this is from arduino {{_i}} {{timer}}; ENTER
+VAR a 1000
+DELAY {{a}}
+GUI r
+DELAY {{a}}
+STRING notepad
+ENTER
+DELAY {{a}}
+REPEAT 10: STRING hello" {{_i}} {{a}}; ENTER
 END

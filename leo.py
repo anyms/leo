@@ -1,3 +1,12 @@
+"""
+Generate Arduino Leonardo C code
+
+Leo is a ducky like script, it very simple and easy to understand. I said ducky like script because actually, you can not use a ducky script with Leo, some syntax might look similar to ducky script but its not
+
+Author: Jeeva
+Copyright: http://tamilwired.com
+"""
+
 import cmd
 import optparse
 import sys
@@ -46,7 +55,6 @@ F12           0xCD    205
         exit(0)
 
 input = open(sys.argv[1], 'rt')
-
 
 class Leo(cmd.Cmd):    
     use_rawinput = False
