@@ -1,0 +1,2 @@
+#include "Keyboard.h"
+void typeKey(int key) {Keyboard.press(key);delay(50);Keyboard.release(key);}void combo(int key, char letter) {Keyboard.press(key);Keyboard.press(letter);Keyboard.releaseAll();}void setup() {Keyboard.begin();delay(3000);Keyboard.press(KEY_LEFT_GUI);delay(50);Keyboard.print("r");delay(50);Keyboard.releaseAll();delay(2000);Keyboard.press(KEY_ESC);delay(50);Keyboard.releaseAll();Keyboard.end();}void loop() {}
